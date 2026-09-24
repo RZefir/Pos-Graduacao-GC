@@ -1,6 +1,12 @@
 {
+  "name": "funcao1",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "functions-framework --target=path"
+  },
   "dependencies": {
     "@google-cloud/functions-framework": "^3.0.0"
-  },
-  "type": "module"
+  }
 }
