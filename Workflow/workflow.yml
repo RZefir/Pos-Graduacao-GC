@@ -1,0 +1,238 @@
+main:
+  params: [args]
+
+  steps:
+    - logStart:
+        call: sys.log
+        args:
+          severity: "INFO"
+          json:
+            event: "workflow_started"
+            requestId: ${args.requestId}
+            player: ${args.player}
+
+    - quest:
+        try:
+          steps:
+            - logQuestStart:
+                call: sys.log
+                args:
+                  severity: "INFO"
+                  json:
+                    event: "step_started"
+                    step: "quest"
+                    requestId: ${args.requestId}
+
+            - callQuest:
+                call: http.post
+                args:
+                  url: ${sys.get_env("QUEST_URL")}
+                  auth:
+                    type: OIDC
+                  body:
+                    requestId: ${args.requestId}
+                    player: ${args.player}
+                result: questResult
+
+            - logQuestSuccess:
+                call: sys.log
+                args:
+                  severity: "INFO"
+                  json:
+                    event: "step_completed"
+                    step: "quest"
+                    requestId: ${args.requestId}
+
+        retry:
+          predicate: ${http.default_retry_predicate}
+          max_retries: 3
+          backoff:
+            initial_delay: 1
+            max_delay: 10
+            multiplier: 2
+
+        except:
+          as: e
+          steps:
+            - logQuestError:
+                call: sys.log
+                args:
+                  severity: "ERROR"
+                  json:
+                    event: "step_failed"
+                    step: "quest"
+                    requestId: ${args.requestId}
+                    error: ${e}
+
+            - prepareQuestDLQ:
+                assign:
+                  - dlqMessage:
+                      step: "quest"
+                      requestId: ${args.requestId}
+                      player: ${args.player}
+                      error: ${e}
+                  - dlqData: ${base64.encode(json.encode(dlqMessage))}
+
+            - sendQuestToDLQ:
+                call: googleapis.pubsub.v1.projects.topics.publish
+                args:
+                  topic: "projects/test-projects-509305/topics/game-dlq"
+                  body:
+                    messages:
+                      - data: ${dlqData}
+
+            - failQuest:
+                raise: ${e}
+
+    - inventory:
+        try:
+          steps:
+            - logInventoryStart:
+                call: sys.log
+                args:
+                  severity: "INFO"
+                  json:
+                    event: "step_started"
+                    step: "inventory"
+                    requestId: ${args.requestId}
+
+            - callInventory:
+                call: http.post
+                args:
+                  url: ${sys.get_env("INVENTORY_URL")}
+                  auth:
+                    type: OIDC
+                  body: ${questResult.body}
+                result: inventoryResult
+
+            - logInventorySuccess:
+                call: sys.log
+                args:
+                  severity: "INFO"
+                  json:
+                    event: "step_completed"
+                    step: "inventory"
+                    requestId: ${args.requestId}
+
+        retry:
+          predicate: ${http.default_retry_predicate}
+          max_retries: 3
+          backoff:
+            initial_delay: 1
+            max_delay: 10
+            multiplier: 2
+
+        except:
+          as: e
+          steps:
+            - logInventoryError:
+                call: sys.log
+                args:
+                  severity: "ERROR"
+                  json:
+                    event: "step_failed"
+                    step: "inventory"
+                    requestId: ${args.requestId}
+                    error: ${e}
+
+            - prepareInventoryDLQ:
+                assign:
+                  - dlqMessage:
+                      step: "inventory"
+                      requestId: ${args.requestId}
+                      payload: ${questResult.body}
+                      error: ${e}
+                  - dlqData: ${base64.encode(json.encode(dlqMessage))}
+
+            - sendInventoryToDLQ:
+                call: googleapis.pubsub.v1.projects.topics.publish
+                args:
+                  topic: "projects/test-projects-509305/topics/game-dlq"
+                  body:
+                    messages:
+                      - data: ${dlqData}
+
+            - failInventory:
+                raise: ${e}
+
+    - reward:
+        try:
+          steps:
+            - logRewardStart:
+                call: sys.log
+                args:
+                  severity: "INFO"
+                  json:
+                    event: "step_started"
+                    step: "reward"
+                    requestId: ${args.requestId}
+
+            - callReward:
+                call: http.post
+                args:
+                  url: ${sys.get_env("REWARD_URL")}
+                  auth:
+                    type: OIDC
+                  body: ${inventoryResult.body}
+                result: rewardResult
+
+            - logRewardSuccess:
+                call: sys.log
+                args:
+                  severity: "INFO"
+                  json:
+                    event: "step_completed"
+                    step: "reward"
+                    requestId: ${args.requestId}
+
+        retry:
+          predicate: ${http.default_retry_predicate}
+          max_retries: 3
+          backoff:
+            initial_delay: 1
+            max_delay: 10
+            multiplier: 2
+
+        except:
+          as: e
+          steps:
+            - logRewardError:
+                call: sys.log
+                args:
+                  severity: "ERROR"
+                  json:
+                    event: "step_failed"
+                    step: "reward"
+                    requestId: ${args.requestId}
+                    error: ${e}
+
+            - prepareRewardDLQ:
+                assign:
+                  - dlqMessage:
+                      step: "reward"
+                      requestId: ${args.requestId}
+                      payload: ${inventoryResult.body}
+                      error: ${e}
+                  - dlqData: ${base64.encode(json.encode(dlqMessage))}
+
+            - sendRewardToDLQ:
+                call: googleapis.pubsub.v1.projects.topics.publish
+                args:
+                  topic: "projects/test-projects-509305/topics/game-dlq"
+                  body:
+                    messages:
+                      - data: ${dlqData}
+
+            - failReward:
+                raise: ${e}
+
+    - logFinish:
+        call: sys.log
+        args:
+          severity: "INFO"
+          json:
+            event: "workflow_completed"
+            requestId: ${args.requestId}
+
+    - finish:
+        return: ${rewardResult.body}
