@@ -22,4 +22,10 @@ Os serviços são implantados nas respectivas regiões configuradas no projeto. 
 ### Evidência
 
 O pipeline foi executado com sucesso no GitHub Actions, realizando o build
-e deploy das três funções no Google Cloud Run.
+e deploy das três funções no Google Cloud Run. Eu fiz tanto de forma manual como por PR. As alterações podem ser vistas pelos commits.
+
+![alt text](Evidencia1.png)
+
+![alt text](Evidencia2.png)
+
+![alt text](Evidencia3.png)
