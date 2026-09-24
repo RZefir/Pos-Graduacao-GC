@@ -1,0 +1,46 @@
+name: Deploy Cloud Run Services
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Deploy Funcao1
+        run: |
+          gcloud run deploy test1 \
+            --source ./Funcao1 \
+            --region southamerica-east1 \
+            --project test-projects-509305 \
+            --quiet
+
+      - name: Deploy Funcao2
+        run: |
+          gcloud run deploy test2 \
+            --source ./Funcao2 \
+            --region southamerica-east1 \
+            --project test-projects-509305 \
+            --quiet
+
+      - name: Deploy Funcao3
+        run: |
+          gcloud run deploy test3 \
+            --source ./Funcao3 \
+            --region europe-west1 \
+            --project test-projects-509305 \
+            --quiet
