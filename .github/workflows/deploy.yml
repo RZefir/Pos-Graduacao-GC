@@ -45,3 +45,11 @@ jobs:
             --region europe-west1 \
             --project test-projects-509305 \
             --quiet
+
+      - name: Deploy Funcao4
+        run: |
+          gcloud run deploy test4 \
+            --source ./Funcao4 \
+            --region southamerica-east1 \
+            --project test-projects-509305 \
+            --quiet

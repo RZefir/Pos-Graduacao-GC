@@ -154,6 +154,17 @@ main:
 
             - failInventory:
                 raise: ${e}
+                
+    - callAI:
+        call: http.post
+        args:
+          url: ${sys.get_env("AI_REWARD_URL")}
+          auth:
+            type: OIDC
+          body:
+            player: ${args.player}
+            quest: ${inventoryResult.body}
+        result: aiResult
 
     - reward:
         try:
