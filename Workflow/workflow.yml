@@ -168,7 +168,7 @@ main:
 
     - mergeReward:
         assign:
-          - rewardPayload: ${map.merge(inventoryResult.body, {"aiReward": aiResult.body})}
+          - rewardPayload: '${map.merge(inventoryResult.body, {"aiReward": aiResult.body})}'
 
     - reward:
         try:
