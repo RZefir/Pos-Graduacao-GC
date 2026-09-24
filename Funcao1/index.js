@@ -8,7 +8,7 @@ http('path', (req, res) => {
   res.status(200).json({
     requestId,
     player,
-    quest: 'The Lost Dungeon',
+    quest: 'The Lost GREAT Dungeon',
     status: 'started',
     message: `The path ahead is dangerous, ${player}.`
   });
