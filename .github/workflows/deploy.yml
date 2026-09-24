@@ -53,3 +53,10 @@ jobs:
             --region southamerica-east1 \
             --project test-projects-509305 \
             --quiet
+
+      - name: Deploy Workflow
+        run: |
+          gcloud workflows deploy game-workflow \
+            --source=./workflow.yaml \
+            --location southamerica-east1 \
+            --project test-projects-509305
