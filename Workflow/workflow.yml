@@ -154,7 +154,7 @@ main:
 
             - failInventory:
                 raise: ${e}
-                
+
     - callAI:
         call: http.post
         args:
@@ -165,6 +165,10 @@ main:
             player: ${args.player}
             quest: ${inventoryResult.body}
         result: aiResult
+
+    - mergeReward:
+        assign:
+          - rewardPayload: ${map.merge(inventoryResult.body, {"aiReward": aiResult.body})}
 
     - reward:
         try:
@@ -184,7 +188,7 @@ main:
                   url: ${sys.get_env("REWARD_URL")}
                   auth:
                     type: OIDC
-                  body: ${inventoryResult.body}
+                  body: ${rewardPayload}
                 result: rewardResult
 
             - logRewardSuccess:
@@ -222,7 +226,7 @@ main:
                   - dlqMessage:
                       step: "reward"
                       requestId: ${args.requestId}
-                      payload: ${inventoryResult.body}
+                      payload: ${rewardPayload}
                       error: ${e}
                   - dlqData: ${base64.encode(json.encode(dlqMessage))}
 
