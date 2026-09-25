@@ -27,16 +27,24 @@ Cada etapa depende do resultado da anterior. Se fosse coreografia, cada serviço
 
 #### Serviços (Cloud Run)
 Quest: recebe requestId e player, processa a missão do jogador e retorna o resultado da quest.
-Inventory: recebe o resultado da quest e atualiza/consulta o inventário do jogador, retornando os dados combinados.
-AI Reward: recebe o player e o resultado do inventário, e usa o Gemini (via function calling) pra decidir quanto de gold e xp o jogador ganha.
-Reward: recebe o resultado final (incluindo a recompensa decidida pela IA) e salva no Firestore, com checagem de idempotência por requestId.
-Fluxo do Workflow
-logStart - loga o início com requestId e player
-quest - chama a função Quest
+
+**inventory:** recebe o resultado da quest e atualiza/consulta o inventário do jogador, retornando os dados combinados.
+
+**AI Reward:** recebe o player e o resultado do inventário, e usa o Gemini (via function calling) pra decidir quanto de gold e xp o jogador ganha.
+
+**Reward:** recebe o resultado final (incluindo a recompensa decidida pela IA) e salva no Firestore, com checagem de idempotência por requestId.
+
+#### Fluxo do Workflow
+**logStart** - loga o início com requestId e player
+
+**quest**  -  chama a função Quest
 inventory - chama a função Inventory, passando o resultado da quest
-callAI - chama a função AI Reward
-reward - chama a função Reward, salvando o resultado final
-logFinish - loga o fim do processamento
+
+**callAI** - chama a função AI Reward
+
+**reward** - chama a função Reward, salvando o resultado final
+
+**logFinish** - loga o fim do processamento
 
 Cada etapa crítica (quest, inventory, reward) tem retry automático com backoff exponencial (até 3 tentativas, esperando mais tempo a cada uma) pra lidar com falha transitória tipo timeout.
 
