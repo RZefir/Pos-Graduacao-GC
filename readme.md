@@ -66,6 +66,9 @@ A função Reward usa Firestore pra garantir que cada requestId só é processad
 
 A comunicação entre os serviços usa autenticação OIDC nativa do Cloud Run/Workflows, então nenhum serviço guarda chave estática — a autenticação é validada pelo IAM do Google a cada chamada.
 
+### Evidência IA
+![alt text](EvidenciaIA.png)
+
 ### Evidência
 
 O pipeline foi executado com sucesso no GitHub Actions, realizando o build
